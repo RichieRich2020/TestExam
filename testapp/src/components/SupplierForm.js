@@ -4,7 +4,9 @@ const SupplierForm = ({ formData, onFormDataChange }) => {
   const [countries, setCountries] = useState([])
   const [states, setStates] = useState([])
   const [cities, setCities] = useState([])
-  console.log(formData)
+  const [errors, setErrors] = useState({})
+  const [touched, setTouched] = useState({})
+
   useEffect(() => {
     const fetchCountries = async () => {
       try {
@@ -15,7 +17,6 @@ const SupplierForm = ({ formData, onFormDataChange }) => {
           throw new Error("Failed to fetch countries")
         }
         const data = await response.json()
-        // Ensure data is an array
         if (Array.isArray(data.data.countyList)) {
           setCountries(data.data.countyList)
         } else {
@@ -90,33 +91,70 @@ const SupplierForm = ({ formData, onFormDataChange }) => {
     fetchCities()
   }, [formData.stateId])
 
+  useEffect(() => {
+    const validateFormData = () => {
+      const newErrors = {}
+
+      if (!formData.supplierName) {
+        newErrors.supplierName = "Supplier Name is required"
+      }
+
+      if (!formData.email || !/\S+@\S+\.\S+/.test(formData.email)) {
+        newErrors.email = "A valid email address is required"
+      }
+
+      if (!formData.phoneNumber || !/^\d+$/.test(formData.phoneNumber)) {
+        newErrors.phoneNumber = "Phone Number must be a valid number"
+      }
+
+      if (!formData.countryId) {
+        newErrors.countryId = "Country is required"
+      }
+
+      if (!formData.stateId) {
+        newErrors.stateId = "State is required"
+      }
+
+      if (!formData.cityId) {
+        newErrors.cityId = "City is required"
+      }
+
+      setErrors(newErrors)
+    }
+
+    validateFormData()
+  }, [formData])
+
   const handleChange = (e) => {
     const { name, value } = e.target
+    setTouched({ ...touched, [name]: true })
     onFormDataChange({ ...formData, [name]: value })
   }
 
   const handleCountryChange = (e) => {
-    const { value, name } = e.target
-    console.log("Selected countryId:", value, name) // Log the selected countryId
+    const { value } = e.target
+    setTouched({ ...touched, countryId: true, stateId: false, cityId: false })
     onFormDataChange({
       ...formData,
       countryId: value,
-      stateId: "", // Clear stateId and cityId when countryId changes
+      stateId: "",
       cityId: "",
     })
   }
 
   const handleStateChange = (e) => {
     const { value } = e.target
+    setTouched({ ...touched, stateId: true, cityId: false })
     onFormDataChange({
       ...formData,
       stateId: value,
-      cityId: "", // Clear cityId when stateId changes
+      cityId: "",
     })
   }
 
   const handleCityChange = (e) => {
     const { value } = e.target
+    setTouched({ ...touched, cityId: true })
     onFormDataChange({
       ...formData,
       cityId: value,
@@ -135,9 +173,13 @@ const SupplierForm = ({ formData, onFormDataChange }) => {
           name="supplierName"
           value={formData.supplierName}
           onChange={handleChange}
+          onFocus={() => setTouched({ ...touched, supplierName: true })}
           placeholder="Adil"
           style={inputStyle}
         />
+        {touched.supplierName && errors.supplierName && (
+          <span style={{ color: "red" }}>{errors.supplierName}</span>
+        )}
       </div>
 
       <div style={inputContainerStyle}>
@@ -150,6 +192,7 @@ const SupplierForm = ({ formData, onFormDataChange }) => {
           name="companyName"
           value={formData.companyName}
           onChange={handleChange}
+          onFocus={() => setTouched({ ...touched, companyName: true })}
           placeholder="Apple"
           style={inputStyle}
         />
@@ -165,9 +208,13 @@ const SupplierForm = ({ formData, onFormDataChange }) => {
           name="email"
           value={formData.email}
           onChange={handleChange}
+          onFocus={() => setTouched({ ...touched, email: true })}
           placeholder="adilIsmail@apple.co"
           style={inputStyle}
         />
+        {touched.email && errors.email && (
+          <span style={{ color: "red" }}>{errors.email}</span>
+        )}
       </div>
 
       <div style={inputContainerStyle}>
@@ -180,6 +227,7 @@ const SupplierForm = ({ formData, onFormDataChange }) => {
           name="phoneCode"
           value={formData.phoneCode}
           onChange={handleChange}
+          onFocus={() => setTouched({ ...touched, phoneCode: true })}
           placeholder="+91"
           style={inputStyle}
         />
@@ -195,9 +243,13 @@ const SupplierForm = ({ formData, onFormDataChange }) => {
           name="phoneNumber"
           value={formData.phoneNumber}
           onChange={handleChange}
+          onFocus={() => setTouched({ ...touched, phoneNumber: true })}
           placeholder="7007402688"
           style={inputStyle}
         />
+        {touched.phoneNumber && errors.phoneNumber && (
+          <span style={{ color: "red" }}>{errors.phoneNumber}</span>
+        )}
       </div>
 
       <div style={inputContainerStyle}>
@@ -209,6 +261,7 @@ const SupplierForm = ({ formData, onFormDataChange }) => {
           name="countryId"
           value={formData.countryId}
           onChange={handleCountryChange}
+          onFocus={() => setTouched({ ...touched, countryId: true })}
           style={inputStyle}
         >
           <option value="">Select Country</option>
@@ -218,6 +271,9 @@ const SupplierForm = ({ formData, onFormDataChange }) => {
             </option>
           ))}
         </select>
+        {touched.countryId && errors.countryId && (
+          <span style={{ color: "red" }}>{errors.countryId}</span>
+        )}
       </div>
 
       <div style={inputContainerStyle}>
@@ -229,6 +285,7 @@ const SupplierForm = ({ formData, onFormDataChange }) => {
           name="stateId"
           value={formData.stateId}
           onChange={handleStateChange}
+          onFocus={() => setTouched({ ...touched, stateId: true })}
           style={inputStyle}
           disabled={!formData.countryId}
         >
@@ -239,6 +296,9 @@ const SupplierForm = ({ formData, onFormDataChange }) => {
             </option>
           ))}
         </select>
+        {touched.stateId && errors.stateId && (
+          <span style={{ color: "red" }}>{errors.stateId}</span>
+        )}
       </div>
 
       <div style={inputContainerStyle}>
@@ -250,16 +310,20 @@ const SupplierForm = ({ formData, onFormDataChange }) => {
           name="cityId"
           value={formData.cityId}
           onChange={handleCityChange}
+          onFocus={() => setTouched({ ...touched, cityId: true })}
           style={inputStyle}
           disabled={!formData.stateId}
         >
           <option value="">Select City</option>
           {cities.map((city) => (
-            <option key={city.Id} value={city.Id}>
+            <option key={city.cityId} value={city.cityId}>
               {city.name}
             </option>
           ))}
         </select>
+        {touched.cityId && errors.cityId && (
+          <span style={{ color: "red" }}>{errors.cityId}</span>
+        )}
       </div>
     </div>
   )
